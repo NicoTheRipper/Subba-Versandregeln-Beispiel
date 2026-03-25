@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Versandlogik Test</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 40px;
+      background: #f4f7f9;
+      color: #1f2937;
+    }
+
+    .card {
+      max-width: 760px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 28px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 28px;
+      color: #009bb4;
+    }
+
+    p {
+      line-height: 1.5;
+      color: #4b5563;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    input {
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #009bb4;
+      box-shadow: 0 0 0 3px rgba(0, 155, 180, 0.12);
+    }
+
+    .button-row {
+      margin-top: 20px;
+    }
+
+    button {
+      background: #009bb4;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 18px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.95;
+    }
+
+    .result {
+      margin-top: 28px;
+      padding: 20px;
+      border-radius: 10px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+    }
+
+    .result h2 {
+      margin-top: 0;
+      font-size: 22px;
+    }
+
+    .value {
+      font-weight: bold;
+      color: #111827;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: bold;
+      font-size: 14px;
+      margin-top: 8px;
+      margin-right: 8px;
+    }
+
+    .standard {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .sperrgut {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .ok {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .note {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .price-highlight {
+      margin-top: 16px;
+      padding: 14px;
+      background: #eefafc;
+      border: 1px solid #cceff5;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #0f172a;
+    }
+
+    @media (max-width: 700px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      body {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Versandlogik Test</h1>
+    <p>
+      Dieses Beispiel kombiniert Maß-, Gewichts- und Maximalmaß-Prüfung
+      für gerollte Produkte.
+    </p>
+
+    <div class="grid">
+      <div class="field">
+        <label for="width">Breite (cm)</label>
+        <input type="number" id="width" placeholder="z. B. 165" min="0" step="0.1" />
+      </div>
+
+      <div class="field">
+        <label for="height">Höhe / Länge (cm)</label>
+        <input type="number" id="height" placeholder="z. B. 80" min="0" step="0.1" />
+      </div>
+
+      <div class="field">
+        <label for="weight">Gewicht (kg)</label>
+        <input type="number" id="weight" placeholder="z. B. 18.5" min="0" step="0.1" />
+      </div>
+    </div>
+
+    <div class="button-row">
+      <button onclick="calculateShipping()">Versand berechnen</button>
+    </div>
+
+    <div class="result" id="result">
+      <h2>Ergebnis</h2>
+      <p>Bitte Breite, Höhe/Länge und Gewicht eingeben.</p>
+    </div>
+
+    <div class="note">
+      Regeln:<br>
+      - max. Breite: 160 cm<br>
+      - max. Länge: 500 cm<br>
+      - 0 bis 20 kg = 6 € Grundversand<br>
+      - über 20 bis 31,5 kg = 12 € Grundversand<br>
+      - Breite über 120 cm = +6 € Zuschlag nicht bandfähig
+    </div>
+  </div>
+
+  <script>
+    function calculateShipping() {
+      const width = parseFloat(document.getElementById("width").value);
+      const height = parseFloat(document.getElementById("height").value);
+      const weight = parseFloat(document.getElementById("weight").value);
+      const result = document.getElementById("result");
+
+      if (
+        isNaN(width) || width <= 0 ||
+        isNaN(height) || height <= 0 ||
+        isNaN(weight) || weight <= 0
+      ) {
+        result.innerHTML = `
+          <h2>Ergebnis</h2>
+          <p>Bitte gültige Werte für Breite, Höhe/Länge und Gewicht eingeben.</p>
+        `;
+        return;
+      }
+
+      const shorterSide = Math.min(width, height);
+      const longerSide = Math.max(width, height);
+      const area = (width * height) / 10000;
+
+      // Definition für Rollenversand:
+      // schmalere Seite = Breite
+      // längere Seite = Länge
+      const shippingWidth = shorterSide;
+      const shippingLength = longerSide;
+
+      if (shippingWidth > 160) {
+        result.innerHTML = `
+          <h2>Ergebnis</h2>
+          <p><span class="value">Eingegebene Maße:</span> ${width} × ${height} cm</p>
+          <p><span class="value">Versandbreite:</span> ${shippingWidth} cm</p>
+          <span class="badge error">Nicht zulässig: maximale Breite 160 cm überschritten</span>
+        `;
+        return;
+      }
+
+      if (shippingLength > 500) {
+        result.innerHTML = `
+          <h2>Ergebnis</h2>
+          <p><span class="value">Eingegebene Maße:</span> ${width} × ${height} cm</p>
+          <p><span class="value">Versandlänge:</span> ${shippingLength} cm</p>
+          <span class="badge error">Nicht zulässig: maximale Länge 500 cm überschritten</span>
+        `;
+        return;
+      }
+
+      if (weight > 31.5) {
+        result.innerHTML = `
+          <h2>Ergebnis</h2>
+          <p><span class="value">Eingegebene Maße:</span> ${width} × ${height} cm</p>
+          <p><span class="value">Gewicht:</span> ${weight.toFixed(2)} kg</p>
+          <span class="badge error">Nicht zulässig: über 31,5 kg</span>
+          <p class="price-highlight">Für dieses Paket muss eine separate Versandlogik greifen.</p>
+        `;
+        return;
+      }
+
+      let baseShipping = 0;
+      let weightText = "";
+
+      if (weight <= 20) {
+        baseShipping = 6;
+        weightText = "0 bis 20 kg";
+      } else {
+        baseShipping = 12;
+        weightText = "über 20 bis 31,5 kg";
+      }
+
+      let oversizedSurcharge = 0;
+      let shippingType = "";
+      let badgeClass = "";
+
+      if (shippingWidth > 120) {
+        oversizedSurcharge = 6;
+        shippingType = "Nicht bandfähig / Sperrgut";
+        badgeClass = "sperrgut";
+      } else {
+        shippingType = "Standardmaß";
+        badgeClass = "standard";
+      }
+
+      const totalShipping = baseShipping + oversizedSurcharge;
+
+      result.innerHTML = `
+        <h2>Ergebnis</h2>
+        <p><span class="value">Breite:</span> ${width} cm</p>
+        <p><span class="value">Höhe / Länge:</span> ${height} cm</p>
+        <p><span class="value">Fläche:</span> ${area.toFixed(2)} m²</p>
+        <p><span class="value">Versandbreite:</span> ${shippingWidth} cm</p>
+        <p><span class="value">Versandlänge:</span> ${shippingLength} cm</p>
+        <p><span class="value">Gewicht:</span> ${weight.toFixed(2)} kg</p>
+        <p><span class="value">Gewichtsstufe:</span> ${weightText}</p>
+        <p><span class="value">Grundversand:</span> ${baseShipping.toFixed(2)} €</p>
+        <p><span class="value">Zuschlag nicht bandfähig:</span> ${oversizedSurcharge.toFixed(2)} €</p>
+        <span class="badge ${badgeClass}">${shippingType}</span>
+        <span class="badge ok">Versand zulässig</span>
+        <div class="price-highlight">
+          Gesamtversand: ${totalShipping.toFixed(2)} €
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
